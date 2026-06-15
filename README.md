@@ -214,7 +214,7 @@ docs/                   — design specs
 ## Design system
 
 The app uses a deliberately hand-drawn type system; this is the personality.
-See [DESIGN_TOKENS.md](DESIGN_TOKENS.md) for the canonical reference.
+See [design/DESIGN_TOKENS.md](design/DESIGN_TOKENS.md) for the canonical reference.
 
 - **Patrick Hand** — body text, list rows, card content, button labels (default `font-sans`)
 - **Caveat** — page titles, bucket headers, greeting, empty states (`font-display`, semibold at ≥ `text-2xl`)
