@@ -71,11 +71,10 @@ deadline-tracker/
 │       └── webhooks/reminder/route.ts  # QStash → send email
 ├── lib/
 │   ├── supabase/{client,server}.ts
-│   ├── parser/index.ts             # parseAssignment()
+│   ├── parser/index.ts             # parseAssignment() + per-date TZ offset (§5)
 │   ├── parser/parser.test.ts
 │   ├── reminders.ts                # QStash schedule/cancel
 │   ├── email.ts                    # Resend wrapper
-│   ├── tz.ts                       # offset helpers
 │   └── ics.ts                      # .ics generation
 ├── components/                     # grouped by feature, not by type
 │   ├── dashboard/                  # DashboardBuckets, BucketColumn, AssignmentCard
