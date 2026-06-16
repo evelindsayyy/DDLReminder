@@ -122,6 +122,13 @@ npm test             # unit suites: recurrence + bucket + score (assertions)
 npm run test:parser  # smoke-test the NL parser against §7 cases
 ```
 
+### CI
+
+GitHub Actions (`.github/workflows/ci.yml`) runs `npm run typecheck` and
+`npm test` on every push to `main` and on pull requests. It does **not** run
+`next build` (that needs Supabase/QStash secrets) or `next lint` — ESLint is
+not configured, so `npm run lint` is opt-in only.
+
 ## Subscribing to your calendar feed
 
 1. Sign in → **Settings → integrations → calendar feed** → click **copy**.
