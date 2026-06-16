@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test:parser": "tsx lib/parser/parser.test.ts",
+    "test:recurrence": "tsx lib/recurrence.test.ts",
+    "test": "tsx lib/recurrence.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
