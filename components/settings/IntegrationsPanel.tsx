@@ -2,19 +2,26 @@
 
 import { useState, useTransition, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { formatDueAt } from '@/lib/format';
 
 interface Props {
   appUrl: string;
+  timezone: string;
   initialIcsToken: string | null;
   initialCanvasUrl: string | null;
   initialGradescopeToken: string | null;
+  canvasLastSyncAt: string | null;
+  canvasLastSyncError: string | null;
 }
 
 export default function IntegrationsPanel({
   appUrl,
+  timezone,
   initialIcsToken,
   initialCanvasUrl,
   initialGradescopeToken,
+  canvasLastSyncAt,
+  canvasLastSyncError,
 }: Props) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -183,6 +190,17 @@ export default function IntegrationsPanel({
         {canvasMsg ? <p className="font-mono text-[11px] text-success">{canvasMsg}</p> : null}
         {syncMsg ? <p className="font-mono text-[11px] text-success">{syncMsg}</p> : null}
         {canvasErr ? <p className="font-mono text-[11px] text-urgent">{canvasErr}</p> : null}
+        {/* Persisted last-sync status (survives reloads; set by manual sync + daily cron). */}
+        {canvasLastSyncError ? (
+          <p className="font-mono text-[11px] text-urgent">
+            ⚠ last sync failed
+            {canvasLastSyncAt ? ` (${formatDueAt(canvasLastSyncAt, timezone)})` : ''}: {canvasLastSyncError}
+          </p>
+        ) : canvasLastSyncAt ? (
+          <p className="font-mono text-[11px] text-ink-faint">
+            last synced {formatDueAt(canvasLastSyncAt, timezone)}
+          </p>
+        ) : null}
       </section>
 
       {/* ----- Gradescope bookmarklet ----- */}

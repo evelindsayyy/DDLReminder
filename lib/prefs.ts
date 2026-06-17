@@ -10,10 +10,12 @@ export interface UserPrefs {
   canvas_ics_url: string | null;
   gradescope_sync_token: string | null;
   ics_token: string | null;
+  canvas_last_sync_at: string | null;
+  canvas_last_sync_error: string | null;
 }
 
 const PREFS_COLUMNS =
-  'user_id, email, reminder_offsets_hours, timezone, semester_end_date, canvas_ics_url, gradescope_sync_token, ics_token';
+  'user_id, email, reminder_offsets_hours, timezone, semester_end_date, canvas_ics_url, gradescope_sync_token, ics_token, canvas_last_sync_at, canvas_last_sync_error';
 
 /**
  * Ensure a `user_prefs` row exists for the given user. Called on first

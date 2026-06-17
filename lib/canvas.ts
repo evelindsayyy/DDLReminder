@@ -156,13 +156,40 @@ export interface SyncSummary {
 const FETCH_TIMEOUT_MS = 30_000;
 
 /**
- * Fetch + parse + upsert a Canvas feed for one user.
+ * Fetch + parse + upsert a Canvas feed for one user, then record the outcome
+ * on `user_prefs` (canvas_last_sync_at / canvas_last_sync_error) so the UI can
+ * surface sync health. Both the manual "Sync now" route and the daily cron go
+ * through here, so recording centrally covers both.
  *
  * `serviceClient` is the supabase service-role client — required when
  * called from the cron, where there's no user session. The user's
  * `user_id` is passed explicitly so RLS isn't relied upon.
  */
 export async function syncCanvasForUser(
+  serviceClient: SupabaseClient,
+  userId: string,
+  canvasIcsUrl: string
+): Promise<SyncSummary> {
+  const result = await performCanvasSync(serviceClient, userId, canvasIcsUrl);
+  // Best-effort status write: a failure to record status must not mask the
+  // sync result, and a pre-0004 DB without these columns must not break syncing.
+  try {
+    await serviceClient
+      .from('user_prefs')
+      .update({
+        canvas_last_sync_at: new Date().toISOString(),
+        canvas_last_sync_error: result.error ?? null,
+      })
+      .eq('user_id', userId);
+  } catch {
+    // ignore — sync status is best-effort
+  }
+  return result;
+}
+
+// Internal: the actual fetch + parse + upsert. Returns a summary; only
+// syncCanvasForUser calls this and persists the outcome.
+async function performCanvasSync(
   serviceClient: SupabaseClient,
   userId: string,
   canvasIcsUrl: string

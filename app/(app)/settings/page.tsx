@@ -70,9 +70,12 @@ export default async function SettingsPage() {
         <SettingsRow label="integrations" note="calendar feed · canvas · gradescope">
           <IntegrationsPanel
             appUrl={appUrl}
+            timezone={prefs.timezone}
             initialIcsToken={prefs.ics_token}
             initialCanvasUrl={prefs.canvas_ics_url}
             initialGradescopeToken={prefs.gradescope_sync_token}
+            canvasLastSyncAt={prefs.canvas_last_sync_at}
+            canvasLastSyncError={prefs.canvas_last_sync_error}
           />
         </SettingsRow>
 
