@@ -16,6 +16,7 @@ import {
   expandRecurrence,
   firstOccurrenceFor,
   computeDefaultUntil,
+  seriesPropagationPatch,
   type Recurrence,
 } from './recurrence';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
@@ -228,6 +229,44 @@ detNo('unknown day token aborts', 'do every blarg');
   const fallback = computeDefaultUntil(first, null, TZ);
   eq('until · fallback is first + 15 weeks',
     fallback.getTime(), first.getTime() + 15 * 7 * 24 * 60 * 60 * 1000);
+}
+
+// ================= seriesPropagationPatch =================
+
+{
+  // Maps the shared fields camelCase → snake_case DB columns.
+  const full = seriesPropagationPatch({
+    title: 'Weekly lab',
+    type: 'lab',
+    notes: 'bring laptop',
+    estimatedHours: 2,
+  });
+  eq('series · title propagates', full.title as string, 'Weekly lab');
+  eq('series · type propagates', full.type as string, 'lab');
+  eq('series · notes propagates', full.notes as string, 'bring laptop');
+  eq('series · estimatedHours → estimated_hours', full.estimated_hours as number, 2);
+  eq('series · no stray keys', Object.keys(full).length, 4);
+
+  // Per-occurrence fields are never propagated, even when present on input.
+  // (Cast through unknown: these keys are intentionally outside the param type.)
+  const perOcc = seriesPropagationPatch({
+    title: 'Lab 5',
+    dueAt: '2026-07-01T03:59:00.000Z',
+    completedAt: '2026-06-20T12:00:00.000Z',
+    actualHours: 3,
+  } as unknown as Parameters<typeof seriesPropagationPatch>[0]);
+  eq('series · per-occurrence fields excluded', Object.keys(perOcc).length, 1);
+  check('series · due_at not in patch', !('due_at' in perOcc));
+  check('series · completed_at not in patch', !('completed_at' in perOcc));
+  check('series · actual_hours not in patch', !('actual_hours' in perOcc));
+
+  // Only keys actually supplied appear (unchanged fields are not overwritten).
+  const partial = seriesPropagationPatch({ notes: null });
+  eq('series · single field only', Object.keys(partial).length, 1);
+  check('series · explicit null notes is kept', partial.notes === null);
+
+  // Empty input → empty patch (caller skips the sibling update).
+  eq('series · empty input → empty patch', Object.keys(seriesPropagationPatch({})).length, 0);
 }
 
 // ---------- report ----------

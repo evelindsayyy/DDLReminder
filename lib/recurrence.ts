@@ -199,3 +199,30 @@ export function computeDefaultUntil(
   // Fallback: 15 weeks after the first occurrence.
   return new Date(firstDueAt.getTime() + 15 * 7 * 24 * 60 * 60 * 1000);
 }
+
+// ---------- series-wide edit ----------
+
+// Subset of an assignment update that may be propagated to an entire recurring
+// series ("edit all upcoming"). `due_at`, `completed_at`, and `actual_hours` are
+// deliberately excluded — they are per-occurrence and never shared across rows.
+export interface SeriesEditableFields {
+  title?: string;
+  type?: string;
+  notes?: string | null;
+  estimatedHours?: number | null;
+}
+
+// Map a parsed (camelCase) update into the snake_case DB patch that is safe to
+// apply to sibling rows of a recurring series. Only keys present in the input
+// appear in the output, so an unchanged field is never overwritten. Pure: no
+// reminder timing is affected because none of these fields shift `due_at`.
+export function seriesPropagationPatch(
+  data: SeriesEditableFields
+): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  if (data.title !== undefined) patch.title = data.title;
+  if (data.type !== undefined) patch.type = data.type;
+  if (data.notes !== undefined) patch.notes = data.notes;
+  if (data.estimatedHours !== undefined) patch.estimated_hours = data.estimatedHours;
+  return patch;
+}

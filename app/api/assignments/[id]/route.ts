@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { updateAssignmentSchema } from '@/lib/schemas';
 import { ensureUserPrefs } from '@/lib/prefs';
+import { seriesPropagationPatch } from '@/lib/recurrence';
 import {
   cancelAssignmentReminders,
   scheduleAssignmentReminders,
@@ -14,15 +15,21 @@ interface RouteContext {
 const SELECT =
   'id, title, type, due_at, completed_at, notes, estimated_hours, actual_hours, course_id, recurrence_group_id, source, external_url, courses(code, name, color)';
 
-// PATCH /api/assignments/[id]
+// PATCH /api/assignments/[id]?scope=one|series
 // Body: UpdateAssignmentInput (partial)
-// Always affects only the single row (series-wide edits are a v2 feature).
+// - scope=one (default): edits only this row.
+// - scope=series: edits this row fully, then propagates the shared fields
+//                 (title, type, notes, estimated_hours) to future occurrences
+//                 (same recurrence_group_id, due_at > now). Per-occurrence
+//                 fields (due_at, completed_at, actual_hours) are never shared.
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
+
+  const scope = request.nextUrl.searchParams.get('scope') ?? 'one';
 
   let body: unknown;
   try {
@@ -75,6 +82,29 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       appUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
     });
   }
+
+  // scope=series: propagate the shared fields to future siblings. No reminder
+  // reschedule is needed — propagated fields never change due_at, and the
+  // reminder webhook reads the current row (so title/notes stay fresh at send).
+  if (scope === 'series' && data.recurrence_group_id) {
+    const seriesPatch = seriesPropagationPatch(parsed.data);
+    if (Object.keys(seriesPatch).length > 0) {
+      const nowIso = new Date().toISOString();
+      const { error: seriesError, count } = await supabase
+        .from('assignments')
+        .update(seriesPatch, { count: 'exact' })
+        .eq('user_id', user.id)
+        .eq('recurrence_group_id', data.recurrence_group_id)
+        .neq('id', params.id)
+        .gt('due_at', nowIso);
+
+      if (seriesError) {
+        return NextResponse.json({ error: seriesError.message }, { status: 500 });
+      }
+      return NextResponse.json({ data, propagated: count ?? 0 });
+    }
+  }
+
   return NextResponse.json({ data });
 }
 
