@@ -126,7 +126,11 @@ export async function rotateGradescopeSyncToken(
   return token;
 }
 
-function generateToken(): string {
-  // 32 random bytes → 64 hex chars, ~256 bits of entropy.
+/**
+ * Generate a URL-safe secret token: 32 random bytes → 64 hex chars,
+ * ~256 bits of entropy. Used for ics_token and gradescope_sync_token, where
+ * the token *is* the auth, so unguessability matters. Exported for unit tests.
+ */
+export function generateToken(): string {
   return randomBytes(32).toString('hex');
 }
