@@ -10,7 +10,7 @@ export interface CalendarMonthViewProps {
   assignments: AssignmentCardData[];
   timezone: string;
   onToggleDone: (id: string, completedAt: string | null) => void;
-  onEdit: (id: string, patch: { title: string; dueAt: string }) => void;
+  onEdit: (id: string, patch: { title: string; dueAt: string }, scope: 'one' | 'series') => void;
   onDelete: (id: string, scope: 'one' | 'series') => void;
 }
 
@@ -187,7 +187,7 @@ export function CalendarMonthView({
                   density="compact"
                   inline
                   onToggleDone={onToggleDone}
-                  onEdit={(patch) => onEdit(a.id, patch)}
+                  onEdit={(patch, scope) => onEdit(a.id, patch, scope)}
                   onDelete={(scope) => onDelete(a.id, scope)}
                 />
               ))}

@@ -76,10 +76,16 @@ export function AssignmentsView({
     }
   }
 
-  async function onEdit(id: string, patch: { title: string; dueAt: string }) {
+  async function onEdit(
+    id: string,
+    patch: { title: string; dueAt: string },
+    scope: 'one' | 'series' = 'one'
+  ) {
     setError(null);
     try {
-      const res = await fetch(`/api/assignments/${id}`, {
+      const url =
+        scope === 'series' ? `/api/assignments/${id}?scope=series` : `/api/assignments/${id}`;
+      const res = await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: patch.title, dueAt: patch.dueAt }),

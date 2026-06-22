@@ -29,7 +29,7 @@ export interface AssignmentCardProps {
   timezone: string;
   density?: 'compact' | 'comfortable';
   onToggleDone: (id: string, completedAt: string | null) => void;
-  onEdit?: (patch: { title: string; dueAt: string }) => void;
+  onEdit?: (patch: { title: string; dueAt: string }, scope: 'one' | 'series') => void;
   onDelete?: (scope: 'one' | 'series') => void;
   // When true (calendar/list rows where the row IS the action), tile is denser.
   inline?: boolean;
@@ -66,9 +66,10 @@ export function AssignmentCard({
       <li className={cn('rounded border border-ink bg-bg', padding)}>
         <EditForm
           a={a}
+          inSeries={inSeries}
           onCancel={() => setEditing(false)}
-          onSave={(patch) => {
-            onEdit(patch);
+          onSave={(patch, scope) => {
+            onEdit(patch, scope);
             setEditing(false);
           }}
         />
@@ -227,12 +228,14 @@ export function AssignmentCard({
 
 function EditForm({
   a,
+  inSeries,
   onCancel,
   onSave,
 }: {
   a: AssignmentCardData;
+  inSeries: boolean;
   onCancel: () => void;
-  onSave: (patch: { title: string; dueAt: string }) => void;
+  onSave: (patch: { title: string; dueAt: string }, scope: 'one' | 'series') => void;
 }) {
   const [title, setTitle] = useState(a.title);
   const [localDt, setLocalDt] = useState(() => {
@@ -241,11 +244,18 @@ function EditForm({
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   });
 
-  function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  // Save with the given scope. `series` propagates the title to future
+  // occurrences in the same recurrence group; the date stays per-occurrence
+  // (the API never shares due_at), so only this row's due_at moves.
+  function save(scope: 'one' | 'series') {
     if (!title.trim()) return;
     const utc = new Date(localDt).toISOString();
-    onSave({ title: title.trim(), dueAt: utc });
+    onSave({ title: title.trim(), dueAt: utc }, scope);
+  }
+
+  function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    save('one');
   }
 
   return (
@@ -266,8 +276,18 @@ function EditForm({
         type="submit"
         className="rounded bg-ink px-3 py-1 text-xs font-medium text-bg hover:bg-ink-soft"
       >
-        Save
+        {inSeries ? 'Save this' : 'Save'}
       </button>
+      {inSeries ? (
+        <button
+          type="button"
+          onClick={() => save('series')}
+          title="Apply the title to this and all upcoming occurrences"
+          className="rounded border border-ink px-3 py-1 text-xs font-medium text-ink hover:bg-bg-dim"
+        >
+          Save all upcoming
+        </button>
+      ) : null}
       <button
         type="button"
         onClick={onCancel}
