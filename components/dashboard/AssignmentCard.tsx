@@ -185,6 +185,18 @@ export function AssignmentCard({
             <span className="font-mono text-ink-faint">· ~{a.estimated_hours}h</span>
           ) : null}
         </div>
+
+        {a.notes && a.notes.trim() ? (
+          <p
+            className={cn(
+              'mt-1 line-clamp-2 whitespace-pre-line text-[11px] leading-snug',
+              isDone ? 'text-ink-faint' : 'text-ink-soft'
+            )}
+            title={a.notes}
+          >
+            {a.notes}
+          </p>
+        ) : null}
       </div>
 
       <div className="flex shrink-0 items-center gap-0.5 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100">
