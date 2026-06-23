@@ -3,14 +3,17 @@
 import { useMemo, useState } from 'react';
 import { toZonedTime } from 'date-fns-tz';
 import { cn } from '@/lib/utils';
-import type { AssignmentCardData } from '@/components/dashboard/AssignmentCard';
+import type {
+  AssignmentCardData,
+  AssignmentEditPatch,
+} from '@/components/dashboard/AssignmentCard';
 import { AssignmentCard } from '@/components/dashboard/AssignmentCard';
 
 export interface CalendarMonthViewProps {
   assignments: AssignmentCardData[];
   timezone: string;
   onToggleDone: (id: string, completedAt: string | null) => void;
-  onEdit: (id: string, patch: { title: string; dueAt: string }, scope: 'one' | 'series') => void;
+  onEdit: (id: string, patch: AssignmentEditPatch, scope: 'one' | 'series') => void;
   onDelete: (id: string, scope: 'one' | 'series') => void;
 }
 

@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import {
   AssignmentCard,
   type AssignmentCardData,
+  type AssignmentEditPatch,
 } from '@/components/dashboard/AssignmentCard';
 import { CourseChip } from '@/components/ui/CourseChip';
 
@@ -11,7 +12,7 @@ export interface GroupedByCourseListProps {
   assignments: AssignmentCardData[];
   timezone: string;
   onToggleDone: (id: string, completedAt: string | null) => void;
-  onEdit: (id: string, patch: { title: string; dueAt: string }, scope: 'one' | 'series') => void;
+  onEdit: (id: string, patch: AssignmentEditPatch, scope: 'one' | 'series') => void;
   onDelete: (id: string, scope: 'one' | 'series') => void;
 }
 

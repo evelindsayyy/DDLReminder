@@ -3,7 +3,10 @@
 import { useMemo, useOptimistic, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import type { AssignmentCardData } from '@/components/dashboard/AssignmentCard';
+import type {
+  AssignmentCardData,
+  AssignmentEditPatch,
+} from '@/components/dashboard/AssignmentCard';
 import { GroupedByCourseList } from './GroupedByCourseList';
 import { CalendarMonthView } from './CalendarMonthView';
 import { SwimLaneTimeline } from './SwimLaneTimeline';
@@ -78,17 +81,22 @@ export function AssignmentsView({
 
   async function onEdit(
     id: string,
-    patch: { title: string; dueAt: string },
+    patch: AssignmentEditPatch,
     scope: 'one' | 'series' = 'one'
   ) {
     setError(null);
     try {
       const url =
         scope === 'series' ? `/api/assignments/${id}?scope=series` : `/api/assignments/${id}`;
+      // Only include actualHours when the edit form actually provided it
+      // (the timeline tooltip omits it) so we never overwrite a logged value
+      // with undefined.
+      const body: Record<string, unknown> = { title: patch.title, dueAt: patch.dueAt };
+      if (patch.actualHours !== undefined) body.actualHours = patch.actualHours;
       const res = await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: patch.title, dueAt: patch.dueAt }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({ error: 'save_failed' }));

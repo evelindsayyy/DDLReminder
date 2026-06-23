@@ -6,7 +6,10 @@ import { cn } from '@/lib/utils';
 import { CourseChip } from '@/components/ui/CourseChip';
 import { TypePill } from '@/components/ui/TypePill';
 import { formatDueAt, formatRelative } from '@/lib/format';
-import type { AssignmentCardData } from '@/components/dashboard/AssignmentCard';
+import type {
+  AssignmentCardData,
+  AssignmentEditPatch,
+} from '@/components/dashboard/AssignmentCard';
 
 // Variant C — Gantt / swim-lane timeline.
 //
@@ -44,7 +47,7 @@ export interface SwimLaneTimelineProps {
   assignments: AssignmentCardData[];
   timezone: string;
   // Optional: handler for chip-click edits. Mirrors AssignmentsView's signature.
-  onEdit?: (id: string, patch: { title: string; dueAt: string }) => void;
+  onEdit?: (id: string, patch: AssignmentEditPatch) => void;
 }
 
 export function SwimLaneTimeline({

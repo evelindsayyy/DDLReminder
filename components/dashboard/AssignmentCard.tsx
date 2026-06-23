@@ -24,12 +24,21 @@ export interface AssignmentCardData {
   courses: { code: string; name: string | null; color: string } | null;
 }
 
+// Shape sent up from the inline edit form. `actualHours` is optional so views
+// with a leaner edit form (e.g. the timeline tooltip) can omit it; when
+// present it is `null` to clear or a non-negative number of logged hours.
+export interface AssignmentEditPatch {
+  title: string;
+  dueAt: string;
+  actualHours?: number | null;
+}
+
 export interface AssignmentCardProps {
   assignment: AssignmentCardData;
   timezone: string;
   density?: 'compact' | 'comfortable';
   onToggleDone: (id: string, completedAt: string | null) => void;
-  onEdit?: (patch: { title: string; dueAt: string }, scope: 'one' | 'series') => void;
+  onEdit?: (patch: AssignmentEditPatch, scope: 'one' | 'series') => void;
   onDelete?: (scope: 'one' | 'series') => void;
   // When true (calendar/list rows where the row IS the action), tile is denser.
   inline?: boolean;
@@ -184,6 +193,11 @@ export function AssignmentCard({
           {a.estimated_hours ? (
             <span className="font-mono text-ink-faint">· ~{a.estimated_hours}h</span>
           ) : null}
+          {a.actual_hours != null ? (
+            <span className="font-mono text-ink-faint" title="Actual time logged">
+              · {a.actual_hours}h logged
+            </span>
+          ) : null}
         </div>
 
         {a.notes && a.notes.trim() ? (
@@ -247,7 +261,7 @@ function EditForm({
   a: AssignmentCardData;
   inSeries: boolean;
   onCancel: () => void;
-  onSave: (patch: { title: string; dueAt: string }, scope: 'one' | 'series') => void;
+  onSave: (patch: AssignmentEditPatch, scope: 'one' | 'series') => void;
 }) {
   const [title, setTitle] = useState(a.title);
   const [localDt, setLocalDt] = useState(() => {
@@ -255,14 +269,23 @@ function EditForm({
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   });
+  const [actualHours, setActualHours] = useState(
+    a.actual_hours != null ? String(a.actual_hours) : ''
+  );
 
   // Save with the given scope. `series` propagates the title to future
   // occurrences in the same recurrence group; the date stays per-occurrence
   // (the API never shares due_at), so only this row's due_at moves.
+  // `actual_hours` is always per-occurrence — the API never propagates it.
   function save(scope: 'one' | 'series') {
     if (!title.trim()) return;
     const utc = new Date(localDt).toISOString();
-    onSave({ title: title.trim(), dueAt: utc }, scope);
+    const trimmed = actualHours.trim();
+    const parsed = trimmed === '' ? null : Number(trimmed);
+    // Guard against a non-numeric or negative entry; drop the field rather
+    // than sending NaN (the schema would reject the whole PATCH).
+    const validActual = parsed != null && Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+    onSave({ title: title.trim(), dueAt: utc, actualHours: validActual }, scope);
   }
 
   function submit(e: FormEvent<HTMLFormElement>) {
@@ -283,6 +306,17 @@ function EditForm({
         value={localDt}
         onChange={(e) => setLocalDt(e.target.value)}
         className="rounded border border-ink-faint px-2 py-1 text-sm font-mono focus:border-ink focus:outline-none"
+      />
+      <input
+        type="number"
+        min="0"
+        step="0.5"
+        value={actualHours}
+        onChange={(e) => setActualHours(e.target.value)}
+        placeholder="hrs"
+        aria-label="Actual hours logged"
+        title="Actual hours logged"
+        className="w-16 rounded border border-ink-faint px-2 py-1 text-sm font-mono focus:border-ink focus:outline-none"
       />
       <button
         type="submit"
