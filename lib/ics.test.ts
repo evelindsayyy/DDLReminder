@@ -120,18 +120,26 @@ has('desc: a2 includes type', u, 'type: reading');
 has('desc: application includes role + stage', u, 'SWE Intern');
 has('desc: application includes stage line', u, 'stage: interview');
 
-// ================= timezone conversion cross-check (UTC) =================
+// ================= timezone conversion cross-check (second zone) =================
+//
+// Cross-check that the SAME instant lands at a different wall time in a
+// different zone — proving the feed converts to the user's zone rather than
+// echoing UTC. We use a real IANA zone (LA = PDT −7) rather than 'UTC': the
+// feed must be independent of the *server's* process timezone (UTC on Vercel),
+// and ical-generator's `timezone: 'UTC'` path renders from process-local
+// components, so a UTC fixture would pass or fail depending on the runner's
+// zone — exactly the bug this conversion fixes. 23:59Z → 16:59 PDT, start −1h.
 
 {
-  const utc = buildIcs({
-    calendarName: 'UTC Cal',
+  const la = buildIcs({
+    calendarName: 'LA Cal',
     appUrl: 'https://x.test',
-    timezone: 'UTC',
+    timezone: 'America/Los_Angeles',
     assignments: [assignment({ id: 'z', due_at: '2026-04-28T23:59:00.000Z' })],
     applications: [],
   });
-  has('utc: DTEND has no offset applied', utc, 'DTEND:20260428T235900');
-  has('utc: DTSTART = due-1h in UTC', utc, 'DTSTART:20260428T225900');
+  has('la: DTEND converted to PDT (23:59Z → 16:59)', la, 'DTEND:20260428T165900');
+  has('la: DTSTART = due-1h in PDT (15:59)', la, 'DTSTART:20260428T155900');
 }
 
 // ================= empty feed =================

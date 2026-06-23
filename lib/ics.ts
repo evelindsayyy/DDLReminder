@@ -3,6 +3,18 @@
 // Per CLAUDE.md §8.
 
 import ical from 'ical-generator';
+import { toZonedTime } from 'date-fns-tz';
+
+// ical-generator renders a Date using the *process* timezone, not the
+// calendar's `timezone` option (it does no UTC→zone conversion itself). On
+// Vercel the process zone is UTC, so a NY deadline at 23:59Z would otherwise
+// be emitted as a floating 23:59 instead of 19:59 EDT (CLAUDE.md §5). We
+// convert each UTC instant to the user's zone ourselves with date-fns-tz and
+// emit it as a `floating` wall-clock time, making the feed independent of the
+// server's timezone.
+function zoned(instant: Date, timezone: string): Date {
+  return toZonedTime(instant, timezone);
+}
 
 export interface IcsAssignmentRow {
   id: string;
@@ -46,8 +58,9 @@ export function buildIcs(args: BuildIcsArgs): string {
     const start = new Date(due.getTime() - 60 * 60 * 1000); // due_at - 1h
     cal.createEvent({
       id: `assignment-${a.id}`,
-      start,
-      end: due,
+      start: zoned(start, args.timezone),
+      end: zoned(due, args.timezone),
+      floating: true,
       summary: courseScopedTitle(a),
       description: descriptionFor(a, args.appUrl),
       url: a.external_url ?? `${args.appUrl}/assignments`,
@@ -60,8 +73,9 @@ export function buildIcs(args: BuildIcsArgs): string {
     const at = new Date(app.next_action_at);
     cal.createEvent({
       id: `application-${app.id}`,
-      start: at,
-      end: new Date(at.getTime() + 30 * 60 * 1000), // 30 min default block
+      start: zoned(at, args.timezone),
+      end: zoned(new Date(at.getTime() + 30 * 60 * 1000), args.timezone), // 30 min default block
+      floating: true,
       summary: `[${app.company}] ${app.next_action ?? app.role}`,
       description: `${app.role}\nstage: ${app.stage}`,
       url: `${args.appUrl}/applications`,
