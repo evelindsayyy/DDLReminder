@@ -9,11 +9,10 @@ import { createClient } from '@/lib/supabase/server';
 import {
   createApplicationSchema,
   updateApplicationSchema,
-  type ApplicationStage,
   type CreateApplicationInput,
   type UpdateApplicationInput,
 } from '@/lib/schemas';
-import type { DisplayStage } from '@/components/applications/ApplicationCard';
+import { resolveStageForLane, type DisplayStage } from '@/lib/applicationStage';
 
 interface ActionResult<T = void> {
   ok: boolean;
@@ -110,18 +109,8 @@ export async function moveApplicationToLane(
   if (readErr) return { ok: false, error: readErr.message };
   if (!current) return { ok: false, error: 'not_found' };
 
-  const currentStage = current.stage as ApplicationStage;
-  const interviewStages: ApplicationStage[] = ['oa', 'phone_screen', 'technical', 'onsite'];
-
-  let nextStage: ApplicationStage;
-  if (targetLane === 'applied') nextStage = 'applied';
-  else if (targetLane === 'offer') nextStage = 'offer';
-  else if (targetLane === 'rejected')
-    nextStage = currentStage === 'withdrawn' ? 'withdrawn' : 'rejected';
-  else
-    nextStage = interviewStages.includes(currentStage) ? currentStage : 'phone_screen';
-
-  if (nextStage === currentStage) return { ok: true };
+  const nextStage = resolveStageForLane(targetLane, current.stage);
+  if (nextStage === current.stage) return { ok: true };
 
   const { error } = await supabase
     .from('applications')

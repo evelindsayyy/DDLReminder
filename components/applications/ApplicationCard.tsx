@@ -1,28 +1,12 @@
 import { cn } from '@/lib/utils';
 import { formatDueAt, formatRelative } from '@/lib/format';
+import type { ApplicationStage } from '@/lib/schemas';
+import { toDisplayStage, type DisplayStage } from '@/lib/applicationStage';
 
-// Schema stages from supabase/migrations/0001_init.sql:
-//   'applied','oa','phone_screen','technical','onsite','offer','rejected','withdrawn'
-// HANDOFF.md kanban + funnel collapse to four lanes:
-//   applied · interview · offer · rejected
-export type ApplicationStage =
-  | 'applied'
-  | 'oa'
-  | 'phone_screen'
-  | 'technical'
-  | 'onsite'
-  | 'offer'
-  | 'rejected'
-  | 'withdrawn';
-
-export type DisplayStage = 'applied' | 'interview' | 'offer' | 'rejected';
-
-export function toDisplayStage(stage: ApplicationStage): DisplayStage {
-  if (stage === 'applied') return 'applied';
-  if (stage === 'offer') return 'offer';
-  if (stage === 'rejected' || stage === 'withdrawn') return 'rejected';
-  return 'interview'; // oa, phone_screen, technical, onsite
-}
+// Re-exported so existing consumers can keep importing from this module.
+// Stage↔lane mapping lives in lib/applicationStage.ts (pure + unit-tested).
+export type { ApplicationStage, DisplayStage };
+export { toDisplayStage };
 
 export interface ApplicationCardData {
   id: string;
