@@ -5,9 +5,10 @@ import { createAssignmentSchema } from '@/lib/schemas';
 import { pickColorForNewCourse } from '@/lib/colors';
 import { computeDefaultUntil, expandRecurrence } from '@/lib/recurrence';
 import { scheduleAssignmentReminders } from '@/lib/reminders';
+import { normalizeTags } from '@/lib/tags';
 
 const SELECT =
-  'id, title, type, due_at, completed_at, notes, estimated_hours, actual_hours, course_id, recurrence_group_id, source, external_url, courses(code, name, color)';
+  'id, title, type, due_at, completed_at, notes, estimated_hours, actual_hours, tags, course_id, recurrence_group_id, source, external_url, courses(code, name, color)';
 
 // GET /api/assignments?status=open|done|all
 export async function GET(request: NextRequest) {
@@ -92,6 +93,7 @@ export async function POST(request: NextRequest) {
   }
 
   const firstDueAt = new Date(parsed.data.dueAt);
+  const tags = normalizeTags(parsed.data.tags);
 
   // Non-recurring path: single insert.
   if (!parsed.data.recurrence) {
@@ -105,6 +107,7 @@ export async function POST(request: NextRequest) {
         due_at: parsed.data.dueAt,
         notes: parsed.data.notes ?? null,
         estimated_hours: parsed.data.estimatedHours ?? null,
+        tags,
       })
       .select(SELECT)
       .single();
@@ -159,6 +162,7 @@ export async function POST(request: NextRequest) {
     due_at: d.toISOString(),
     notes: parsed.data.notes ?? null,
     estimated_hours: parsed.data.estimatedHours ?? null,
+    tags,
     recurrence_group_id: groupId,
   }));
 

@@ -108,7 +108,9 @@ Full schema lives in `supabase/migrations/0001_init.sql`. Summary:
 - **`courses`** — user's Duke courses. Unique on `(user_id, code)` so
   re-importing a syllabus doesn't duplicate.
 - **`assignments`** — FK to `courses` (nullable — a one-off deadline has no
-  course). `type` is an enum. `completed_at IS NULL` = open.
+  course). `type` is an enum. `completed_at IS NULL` = open. `tags text[]`
+  (migration `0005`, default `{}`) holds the `#tags` the parser extracts,
+  normalized at the API boundary via `lib/tags.ts`.
 - **`applications`** — separate from assignments because the shape diverges:
   stage enum, `next_action_at`, no single "due date". Do not merge these.
 - **`reminders`** — CHECK constraint: exactly one of `assignment_id` /

@@ -12,7 +12,7 @@ import type { AssignmentCardData } from '@/components/dashboard/AssignmentCard';
 export const dynamic = 'force-dynamic';
 
 const SELECT =
-  'id, title, type, due_at, completed_at, notes, estimated_hours, actual_hours, course_id, recurrence_group_id, source, external_url, courses(code, name, color)';
+  'id, title, type, due_at, completed_at, notes, estimated_hours, actual_hours, tags, course_id, recurrence_group_id, source, external_url, courses(code, name, color)';
 
 interface PageProps {
   searchParams?: { view?: string; filter?: string };
@@ -85,6 +85,7 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
     notes: row.notes,
     estimated_hours: row.estimated_hours,
     actual_hours: row.actual_hours,
+    tags: row.tags ?? [],
     course_id: row.course_id,
     recurrence_group_id: row.recurrence_group_id,
     source: row.source,

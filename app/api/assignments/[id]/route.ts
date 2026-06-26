@@ -13,7 +13,7 @@ interface RouteContext {
 }
 
 const SELECT =
-  'id, title, type, due_at, completed_at, notes, estimated_hours, actual_hours, course_id, recurrence_group_id, source, external_url, courses(code, name, color)';
+  'id, title, type, due_at, completed_at, notes, estimated_hours, actual_hours, tags, course_id, recurrence_group_id, source, external_url, courses(code, name, color)';
 
 // PATCH /api/assignments/[id]?scope=one|series
 // Body: UpdateAssignmentInput (partial)

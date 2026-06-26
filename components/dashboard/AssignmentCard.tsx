@@ -17,6 +17,7 @@ export interface AssignmentCardData {
   notes: string | null;
   estimated_hours: number | null;
   actual_hours: number | null;
+  tags: string[] | null;
   course_id: string | null;
   recurrence_group_id: string | null;
   source: string | null;
@@ -210,6 +211,22 @@ export function AssignmentCard({
           >
             {a.notes}
           </p>
+        ) : null}
+
+        {a.tags && a.tags.length > 0 ? (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {a.tags.map((tag) => (
+              <span
+                key={tag}
+                className={cn(
+                  'rounded-sm bg-bg-dim px-1.5 py-0.5 text-[10px] font-mono lowercase tracking-wide',
+                  isDone ? 'text-ink-faint' : 'text-ink-soft'
+                )}
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
         ) : null}
       </div>
 

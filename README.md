@@ -93,6 +93,8 @@ SQL Editor in order:
 0001_init.sql            — courses, assignments, applications, reminders, user_prefs + RLS
 0002_integrations.sql    — source tracking, recurrence groups, integration columns
 0003_ics_token.sql       — outbound calendar feed token
+0004_sync_status.sql     — Canvas last-sync timestamp + error
+0005_assignment_tags.sql — tags[] column on assignments
 ```
 
 ### 4. Configure Supabase Auth
@@ -209,7 +211,7 @@ components/
   settings/             — CoursesManager, SettingsForm, RemindersForm, IntegrationsPanel
   layout/               — MobileBottomNav (md:hidden tabs), MobileAddBar (sticky add bar)
   ui/                   — CourseChip, TypePill, RelativeTime
-supabase/migrations/    — 0001 init · 0002 integrations · 0003 ics_token · 0004 sync_status
+supabase/migrations/    — 0001 init · 0002 integrations · 0003 ics_token · 0004 sync_status · 0005 assignment_tags
 design/                 — wireframes (index.html + *.jsx), HANDOFF, DESIGN_TOKENS
 docs/                   — design specs
 ```
