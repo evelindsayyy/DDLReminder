@@ -10,6 +10,7 @@ import type {
 import { GroupedByCourseList } from './GroupedByCourseList';
 import { CalendarMonthView } from './CalendarMonthView';
 import { SwimLaneTimeline } from './SwimLaneTimeline';
+import { collectTags, filterByStatus, filterByTag } from '@/lib/assignmentFilter';
 
 export type ViewMode = 'list' | 'calendar' | 'timeline';
 export type FilterMode = 'all' | 'open' | 'done';
@@ -46,6 +47,14 @@ export function AssignmentsView({
 
   const [view, setView] = useState<ViewMode>(initialView);
   const filter: FilterMode = initialFilter;
+  const [tag, setTag] = useState<string | null>(null);
+
+  // Distinct tags across all (unfiltered) assignments, for the chooser.
+  const availableTags = useMemo(() => collectTags(optimistic), [optimistic]);
+
+  // A tag can disappear after a mark-done/delete refresh; drop a stale selection
+  // so we don't silently show an empty list.
+  const activeTag = tag && availableTags.includes(tag) ? tag : null;
 
   function setUrlParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams?.toString() ?? '');
@@ -127,11 +136,10 @@ export function AssignmentsView({
     }
   }
 
-  const visible = useMemo(() => {
-    if (filter === 'open') return optimistic.filter((a) => !a.completed_at);
-    if (filter === 'done') return optimistic.filter((a) => a.completed_at);
-    return optimistic;
-  }, [optimistic, filter]);
+  const visible = useMemo(
+    () => filterByTag(filterByStatus(optimistic, filter), activeTag),
+    [optimistic, filter, activeTag]
+  );
 
   const renderTimeline = (
     <SwimLaneTimeline assignments={optimistic} timezone={timezone} onEdit={onEdit} />
@@ -173,6 +181,20 @@ export function AssignmentsView({
         ) : null}
       </div>
 
+      {view === 'list' && availableTags.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by tag">
+          <TagChip label="all" active={activeTag === null} onClick={() => setTag(null)} />
+          {availableTags.map((t) => (
+            <TagChip
+              key={t}
+              label={`#${t}`}
+              active={activeTag === t}
+              onClick={() => setTag(activeTag === t ? null : t)}
+            />
+          ))}
+        </div>
+      ) : null}
+
       {error ? (
         <p className="rounded border border-urgent/40 bg-urgent/5 p-2 text-xs text-urgent">
           {error}
@@ -202,6 +224,30 @@ export function AssignmentsView({
         </>
       )}
     </div>
+  );
+}
+
+interface TagChipProps {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+function TagChip({ label, active, onClick }: TagChipProps) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        'rounded-full border px-2.5 py-0.5 text-xs transition-colors duration-150',
+        active
+          ? 'border-ink bg-ink text-bg'
+          : 'border-ink-faint/60 bg-bg-soft text-ink-soft hover:bg-bg-dim'
+      )}
+    >
+      {label}
+    </button>
   );
 }
 
